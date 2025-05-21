@@ -10,13 +10,11 @@ import World from './entity/world';
 import Player from './entity/playerv2';
 import * as THREE from 'three'
 import BoxEntity from './entity/box';
-const { visuals, player: playerModel } = await loader('./glb/world.glb', './glb/model.glb');
+const visuals = await loader('./glb/world.glb');
 
 // === SETUP ===
 const scene = new Scene();
 const camera = new Camera();
-
-
 const world = new World(visuals, physic);
 const light = new Light();
 

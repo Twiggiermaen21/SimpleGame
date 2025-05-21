@@ -17,7 +17,7 @@ export default class Graphic extends WebGLRenderer {
         this.setSize(window.innerWidth, window.innerHeight);
 
         window.addEventListener("resize", () => {
-            this.setSize(window.innerWidth, window.innerHeight);
+            this.setSize(window.innerWidth - 10, window.innerHeight - 10);
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
         });

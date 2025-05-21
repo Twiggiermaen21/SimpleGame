@@ -2,8 +2,9 @@ import { Object3D } from 'three';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { RigidBodyDesc, ColliderDesc } from '@dimforge/rapier3d-compat';
 import Gamepad from '../control/gamepad';
+import * as THREE from 'three'
 
-const SPEED = 3
+
 const loaderFBX = new FBXLoader();
 
 export default class Player extends Object3D {
@@ -32,16 +33,18 @@ export default class Player extends Object3D {
     update() {
         const pos = this.rigidBody.translation();
         this.position.set(pos.x, pos.y, pos.z);
-        this.updatePhysic()
+        const ROTATION_SPEED = 0.05;
+        this.rotation.y -= this.ctrl.x * ROTATION_SPEED;
+
+        this.updatePhysic();
+
     }
 
     // === ZAŁADUJ Z .fbx ===
     static async load(path, physic) {
         const fbx = await loaderFBX.loadAsync(path);
 
-        // FBX zwykle zwraca grupę z całą postacią
         const playerMesh = fbx;
-        // Możesz dodać scale, jeśli FBX ma inną jednostkę
         playerMesh.scale.set(0.01, 0.01, 0.01); // często potrzebne przy FBX z Mixamo itp.
 
         const player = new Player(playerMesh, physic);
@@ -49,10 +52,16 @@ export default class Player extends Object3D {
     }
 
     updatePhysic() {
-        const x = this.ctrl.x * SPEED
-        const z = this.ctrl.z * SPEED
-        const y = this.rigidBody.linvel().y
-        this.rigidBody.setLinvel({ x, y, z }, true)
+        let SPEED = 3;
+        if (this.ctrl.sprint) SPEED = 6;
+
+        const localMove = new THREE.Vector3(0, 0, -this.ctrl.z); 
+        const globalMove = localMove.applyQuaternion(this.quaternion);
+        globalMove.multiplyScalar(SPEED);
+        const y = this.rigidBody.linvel().y;
+
+        this.rigidBody.setLinvel({ x: globalMove.x, y, z: globalMove.z }, true);
+
     }
 
 }

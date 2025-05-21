@@ -11,7 +11,8 @@ export default class Input {
         z: null,
         attack: false,
         jump: false,
-        lock: false
+        lock: false,
+        sprint: false,
     };
 
     constructor() {
@@ -41,7 +42,7 @@ export default class Input {
         }
 
         if (value !== this.lastLogged.x) {
-            console.log("X movement:", value);
+            console.log("Rotation Y:", value);
             this.lastLogged.x = value;
         }
 
@@ -92,5 +93,19 @@ export default class Input {
         }
         this.lastLogged.lock = pressed;
         return pressed;
+    }
+    get sprint() {
+        // Sprint na lewy lub prawy shift
+        const pressed = this.keys["ShiftLeft"] || this.keys["ShiftRight"];
+        if (pressed && !this.lastLogged.sprint) {
+            console.log("Sprint started");
+            return pressed;
+        }
+        if (!pressed && this.lastLogged.sprint) {
+            console.log("Sprint stopped");
+        }
+        this.lastLogged.sprint = pressed;
+
+
     }
 }
