@@ -1,5 +1,5 @@
 import { Object3D } from "three";
-import { createRigidBodyEnity} from "../tool/function";
+import { createRigidBodyEnity } from "../tool/function";
 
 export default class Player extends Object3D {
     collider = null;
@@ -7,6 +7,8 @@ export default class Player extends Object3D {
     mesh = null;
     constructor(meshes, physic) {
         super();
+        meshes.position.set(0, 4, 0);
+
         this.position.copy(meshes.position)
         this.initPhysic(physic);
         this.initVisual(meshes);

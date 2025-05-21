@@ -1,40 +1,43 @@
 import { Scene } from 'three';
 
 import Camera from './engine/camera';
+
 import Light from './engine/Light';
 import Graphic from './engine/graphic';
 import loader from './tool/loader';
 import physic from './engine/physic';
 import World from './entity/world';
-import Player from './entity/player';
+import Player from './entity/playerv2';
 import * as THREE from 'three'
+import BoxEntity from './entity/box';
 const { visuals, player: playerModel } = await loader('./glb/world.glb', './glb/model.glb');
 
 // === SETUP ===
 const scene = new Scene();
 const camera = new Camera();
-console.log(visuals)
-const world = new World(visuals, physic);
 
-const player = new Player(playerModel[0], physic); // Zakładam, że player to obiekt FBX
+
+const world = new World(visuals, physic);
 const light = new Light();
 
+const box = new BoxEntity(new THREE.Vector3(0, 10, 0), physic); // startuje 10 jednostek nad ziemią
+const player2 = await Player.load('./player/skin.fbx', physic);
 
 // === CREATE WORLD ===
-
-
-console.log(world)
+// scene.add(new THREE.AxesHelper(5));
+// scene.add(new THREE.GridHelper(100, 100));
 scene.add(light);
 scene.add(world);
-world.position.set(0, -10, 0)
-
-scene.add(player);
-console.log(player.position)
-
-
+scene.add(box);
+scene.add(player2);
 
 const graphic = new Graphic(scene, camera);
 graphic.onUpdate((dt) => {
     physic.step();
-    player.update()
+    player2.update()
+
+    box.update();
+    camera.update(player2)
 });
+
+
