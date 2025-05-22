@@ -1,3 +1,4 @@
+
 const ATTACK = 0;
 const JUMP = 1;
 const LOCK = 7;
@@ -17,11 +18,9 @@ export default class Input {
 
     constructor() {
         window.addEventListener("keydown", (e) => {
-            // console.log("keydown:", e.code);
             this.keys[e.code] = true;
         });
         window.addEventListener("keyup", (e) => {
-            // console.log("keyup:", e.code);
             this.keys[e.code] = false;
         });
     }
@@ -42,7 +41,6 @@ export default class Input {
         }
 
         if (value !== this.lastLogged.x) {
-            console.log("Rotation Y:", value);
             this.lastLogged.x = value;
         }
 
@@ -61,10 +59,8 @@ export default class Input {
         }
 
         if (value !== this.lastLogged.z) {
-            console.log("Z movement:", value);
             this.lastLogged.z = value;
         }
-
         return value;
     }
 
@@ -80,7 +76,6 @@ export default class Input {
     get jump() {
         const pressed = this.gamepad?.buttons[JUMP]?.pressed || this.keys["Space"];
         if (pressed && !this.lastLogged.jump) {
-            console.log("Jump triggered");
         }
         this.lastLogged.jump = pressed;
         return pressed;
@@ -95,17 +90,14 @@ export default class Input {
         return pressed;
     }
     get sprint() {
-        // Sprint na lewy lub prawy shift
         const pressed = this.keys["ShiftLeft"] || this.keys["ShiftRight"];
         if (pressed && !this.lastLogged.sprint) {
-            console.log("Sprint started");
-            return pressed;
-        }
-        if (!pressed && this.lastLogged.sprint) {
-            console.log("Sprint stopped");
+
         }
         this.lastLogged.sprint = pressed;
-
+        return pressed;
 
     }
+
+
 }

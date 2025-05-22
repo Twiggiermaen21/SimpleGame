@@ -4,9 +4,7 @@ const loaderGLB = new GLTFLoader();
 
 export default async function loadAssets(worldPath) {
     const worldGLB = await loaderGLB.loadAsync(worldPath);
-
     const visuals = extractVisuals(worldGLB);
-
     return visuals;
 }
 

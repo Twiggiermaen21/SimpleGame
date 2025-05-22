@@ -20,7 +20,7 @@ export default class BoxEntity extends Object3D {
             position.z
         );
         const rigidBody = physic.createRigidBody(rigidBodyDesc);
-        const colliderDesc = ColliderDesc.cuboid(0.5, 0.5, 0.5); // pół wymiary!
+        const colliderDesc = ColliderDesc.cuboid(0.5, 0.5, 0.5); 
         const collider = physic.createCollider(colliderDesc, rigidBody);
 
         this.rigidBody = rigidBody;

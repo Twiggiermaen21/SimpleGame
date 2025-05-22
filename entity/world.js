@@ -4,7 +4,6 @@ import { createRigidBodyFixed } from "../tool/function";
 export default class World extends Object3D {
     constructor(meshes, physic) {
         super();
-        // this.position.copy(meshes.position)
         this.initPhysic(meshes, physic);
         this.initVisual(meshes);
     }
@@ -13,8 +12,6 @@ export default class World extends Object3D {
         for (const mesh of meshes) {
             createRigidBodyFixed(mesh, physic)
         }
-
-
     }
 
     initVisual(meshes) {
@@ -23,7 +20,5 @@ export default class World extends Object3D {
             mesh.castShadow = true;
             this.add(mesh);
         }
-
     }
-
 }

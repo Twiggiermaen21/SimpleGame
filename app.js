@@ -7,7 +7,7 @@ import Graphic from './engine/graphic';
 import loader from './tool/loader';
 import physic from './engine/physic';
 import World from './entity/world';
-import Player from './entity/playerv2';
+import Player from './entity/player';
 import * as THREE from 'three'
 import BoxEntity from './entity/box';
 const visuals = await loader('./glb/world.glb');
@@ -19,7 +19,7 @@ const world = new World(visuals, physic);
 const light = new Light();
 
 const box = new BoxEntity(new THREE.Vector3(0, 10, 0), physic); // startuje 10 jednostek nad ziemią
-const player2 = await Player.load('./player/skin.fbx', physic);
+const player = await Player.load('./player/skin.fbx', physic);
 
 // === CREATE WORLD ===
 // scene.add(new THREE.AxesHelper(5));
@@ -27,15 +27,14 @@ const player2 = await Player.load('./player/skin.fbx', physic);
 scene.add(light);
 scene.add(world);
 scene.add(box);
-scene.add(player2);
+scene.add(player);
 
 const graphic = new Graphic(scene, camera);
 graphic.onUpdate((dt) => {
     physic.step();
-    player2.update()
-
+    player.update()
     box.update();
-    camera.update(player2)
+    camera.update(player)
 });
 
 

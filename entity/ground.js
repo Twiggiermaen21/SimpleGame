@@ -12,7 +12,6 @@ export default class Ground extends Object3D {
         groundMesh.rotation.x = -Math.PI / 2;
         groundMesh.receiveShadow = true;
 
-        // Fizyczne ciało (statyczne)
         createRigidBodyFixed(groundMesh, physic);
 
         this.add(groundMesh);
