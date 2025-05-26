@@ -99,5 +99,15 @@ export default class Input {
 
     }
 
-
+    get _keys() {
+        return {
+            forward: this.keys["KeyW"] || this.keys["ArrowUp"],
+            backward: this.keys["KeyS"] || this.keys["ArrowDown"],
+            left: this.keys["KeyA"] || this.keys["ArrowLeft"],
+            right: this.keys["KeyD"] || this.keys["ArrowRight"],
+            space: this.keys["Space"],
+            shift: this.keys["ShiftLeft"] || this.keys["ShiftRight"],
+            dance: this.keys["Digit1"],
+        };
+    }
 }
