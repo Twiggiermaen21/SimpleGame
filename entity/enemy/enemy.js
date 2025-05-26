@@ -1,8 +1,5 @@
 import * as THREE from 'three';
-import {
-  RigidBodyDesc,
-  ColliderDesc,
-} from '@dimforge/rapier3d-compat';
+import { RigidBodyDesc, ColliderDesc } from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 
 class EnemyFSM {
@@ -42,7 +39,7 @@ export default class Enemy {
     this.rigidBody = null;
     this.model = null;
     this.target = null;
-
+    this.stopRange = 1.5;
     this.animations = {};
     this._mixer = null;
     this.fsm = new EnemyFSM(this);
@@ -120,30 +117,58 @@ export default class Enemy {
     this.fsm.update();
     if (this._mixer) this._mixer.update(deltaTime);
 
-    // Kierunek poruszania
-    const targetPoint = (this.target && this.model.position.distanceTo(this.target.position) < this.detectionRange)
-      ? this.target.position
-      : this.patrolPath[this.currentPatrolIndex];
+    let direction, dist;
 
-    const direction = new THREE.Vector3().subVectors(targetPoint, this.model.position);
-    const dist = direction.length();
+    if (
+      this.target &&
+      this.model.position.distanceTo(this.target.position) < this.detectionRange
+    ) {
+      // Biegnie do gracza tylko jeśli jest dalej niż stopRange
+      dist = this.model.position.distanceTo(this.target.position);
 
-    if (dist < 0.3 && (!this.target || this.model.position.distanceTo(this.target.position) >= 5)) {
-      this.currentPatrolIndex = (this.currentPatrolIndex + 1) % this.patrolPath.length;
+      if (dist > this.stopRange) {
+        direction = new THREE.Vector3().subVectors(this.target.position, this.model.position).normalize();
+
+        const currentVel = this.rigidBody.linvel();
+        const desiredSpeed = this.speed * 1.5;
+        this.rigidBody.setLinvel({
+          x: direction.x * desiredSpeed,
+          y: currentVel.y,
+          z: direction.z * desiredSpeed,
+        }, true);
+
+      } else {
+        // JEST PRZED GRACZEM → nie porusza się
+        this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
+        console.log('Enemy stopped near player');
+        // Opcjonalnie: zmień animację na idle/attack
+        if (this.animations['idle']) {
+          Object.values(this.animations).forEach(a => a.action.stop());
+          this.animations['idle'].action.reset().play();
+        }
+      }
+    } else {
+      // Patrole
+      const targetPoint = this.patrolPath[this.currentPatrolIndex];
+      direction = new THREE.Vector3().subVectors(targetPoint, this.model.position);
+      dist = direction.length();
+
+      if (dist < 0.3) {
+        this.currentPatrolIndex = (this.currentPatrolIndex + 1) % this.patrolPath.length;
+      }
+
+      direction.normalize();
+
+      const currentVel = this.rigidBody.linvel();
+      this.rigidBody.setLinvel({
+        x: direction.x * this.speed,
+        y: currentVel.y,
+        z: direction.z * this.speed,
+      }, true);
     }
 
-    direction.normalize();
-
-    const currentVel = this.rigidBody.linvel();
-    const desiredSpeed = (this.target && dist < this.detectionRange) ? this.speed * 1.5 : this.speed;
-
-    this.rigidBody.setLinvel({
-      x: direction.x * desiredSpeed,
-      y: currentVel.y, // GRAWITACJA
-      z: direction.z * desiredSpeed,
-    }, true);
-
     // Obrót
+    const currentVel = this.rigidBody.linvel();
     const velocityVec = new THREE.Vector3(currentVel.x, 0, currentVel.z);
     if (velocityVec.lengthSq() > 0.001) {
       const lookAt = new THREE.Vector3().copy(this.model.position).add(velocityVec.normalize());
@@ -153,6 +178,7 @@ export default class Enemy {
       this.model.quaternion.slerp(dummy.quaternion, deltaTime * this.smoothRotationSpeed);
     }
   }
+
 
 
   static async create(patrolPath, physicsWorld, modelPath, animPath) {

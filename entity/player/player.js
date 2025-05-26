@@ -4,6 +4,7 @@ import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { RigidBodyDesc, ColliderDesc } from '@dimforge/rapier3d-compat';
 import Gamepad from '../../control/gamepad';
 import { FSM } from './FSM';
+import { HealthBar } from './bar.js';
 
 const loaderFBX = new FBXLoader();
 
@@ -26,6 +27,9 @@ export default class Player extends Object3D {
         this.physic = physic;
         this.mesh = null;
         this.rigidBody = null;
+        this.healthBar = new HealthBar(); // albo przekazuj elementId jeśli chcesz
+        this.hp = 100;
+        this.isDead = false;
 
         this._animations = {};
         this._mixer = null;
@@ -79,7 +83,7 @@ export default class Player extends Object3D {
         loadAnim('dance', 'dance.fbx');
         loadAnim('attack1', 'attack1.fbx');
         loadAnim('attack2', 'attack2.fbx');
-        
+        loadAnim('dead', 'dead.fbx');
         this.initPhysics();
     }
 
@@ -92,9 +96,35 @@ export default class Player extends Object3D {
         this.rigidBody = rigidBody;
     }
 
-    update(delta) {
+    takeDamage(amount) {
+        if (this.isDead) return; // nie dostaje więcej obrażeń po śmierci
+        this.hp = Math.max(0, this.hp - amount);
+        this.healthBar.set(this.hp);
+        if (this.hp <= 0 && !this.isDead) {
+            if (this._stateMachine) {
+                this._stateMachine.SetState('dead'); // animacja śmierci
+                this.isDead = true;
+            }
+            document.getElementById('game-over').style.display = 'block';
+            const restart = () => {
+                window.location.reload();
+            };
+            window.addEventListener('mousedown', restart, { once: true });
+            window.addEventListener('keydown', restart, { once: true });
+        }
+    }
+
+    update(delta, enemies) {
         if (!this.rigidBody) return;
 
+        // Jeśli martwy - tylko animacja śmierci działa!
+        if (this.isDead) {
+            if (this._mixer) this._mixer.update(delta);
+            if (this._stateMachine) this._stateMachine.Update(delta, this.ctrl); // żeby animacja dead się odpaliła
+            return;
+        }
+
+        // NORMALNY UPDATE
         const pos = this.rigidBody.translation();
         this.position.set(pos.x, pos.y, pos.z);
         this.rotation.y -= this.ctrl.x * 0.03;
@@ -102,8 +132,18 @@ export default class Player extends Object3D {
         if (this._mixer) this._mixer.update(delta);
         if (this._stateMachine) this._stateMachine.Update(delta, this.ctrl);
 
+        if (!this.lastHitTime) this.lastHitTime = 0;
+        const now = performance.now();
+        for (let enemy of enemies) {
+            const dist = this.position.distanceTo(enemy.model.position);
+            if (dist < 1.5 && now - this.lastHitTime > 1000) {
+                this.takeDamage(10);
+                this.lastHitTime = now;
+            }
+        }
         this.updatePhysic();
     }
+
 
     updatePhysic() {
         const SPEED = this.ctrl.sprint ? 6 : 3;
@@ -112,7 +152,6 @@ export default class Player extends Object3D {
 
         const velocity = this.rigidBody.linvel();
         let y = velocity.y;
-
 
         this.rigidBody.setLinvel({ x: globalMove.x, y, z: globalMove.z }, true);
     }

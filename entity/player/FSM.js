@@ -5,6 +5,7 @@ import { jump } from './states/jumpState.js';
 import { dance } from './states/danceState.js';
 import { attack1 } from './states/attack1.js';
 import { attack2 } from './states/attack2.js';
+import { dead } from './states/deadState.js';
 export const FSM = (() => {
 
     class FiniteStateMachine {
@@ -56,6 +57,7 @@ export const FSM = (() => {
             this._AddState('jump', jump.JumpState);
             this._AddState('attack1', attack1.Attack1State);
             this._AddState('attack2', attack2.Attack2State);
+            this._AddState('dead', dead.DeadState); // Reusing Attack1State for Attack3
         }
     };
 

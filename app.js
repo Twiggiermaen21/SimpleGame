@@ -90,12 +90,11 @@ const graphic = new Graphic(scene, camera);
 
 graphic.onUpdate((dt) => {
     physic.step();
-    player.update(dt)
+    player.update(dt, enemies);
     for (const enemy of enemies) {
         enemy.update(dt);
     }
     box.update();
     camera.update(player)
 });
-
 

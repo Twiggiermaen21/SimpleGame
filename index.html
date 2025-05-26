@@ -22,11 +22,71 @@
             width: 100vw;
             height: 100vh;
         }
+
+        #ui {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            pointer-events: none;
+            z-index: 10;
+        }
+
+        #health-container {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 200px;
+            height: 25px;
+            background-color: #444;
+            border: 2px solid #222;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        #health-bar {
+            height: 100%;
+            width: 100%;
+            background-color: #0f0;
+            transition: width 0.2s ease,
+                background-color 0.2s;
+        }
+
+        #game-over {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 3rem;
+            font-family: Arial, sans-serif;
+            color: #fff;
+            text-shadow: 2px 2px 8px #000, 0 0 20px #900;
+            z-index: 100;
+            display: none;
+            pointer-events: none;
+            letter-spacing: 0.2em;
+            font-weight: bold;
+        }
+
+        #reset {
+            font-size: 1.5rem;
+            color: #ccc;
+            text-shadow: 1px 1px 4px #000, 0 0 10px #900;
+        }
     </style>
     <script src="./app.js" type="module"></script>
 </head>
 
 <body>
+    <div id="ui">
+        <div id="health-container">
+            <div id="health-bar"></div>
+        </div>
+    </div>
+    <div id="game-over" style="display:none;">
+        GAME OVER <br />
+        <span id="reset">Kliknij lub naciśnij dowolny klawisz, aby zrestartować</span>
+    </div>
     <canvas></canvas>
 </body>
 
