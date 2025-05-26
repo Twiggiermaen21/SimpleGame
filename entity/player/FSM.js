@@ -3,6 +3,8 @@ import { walk } from './states/walkState.js';
 import { run } from './states/runState.js';
 import { jump } from './states/jumpState.js';
 import { dance } from './states/danceState.js';
+import { attack1 } from './states/attack1.js';
+import { attack2 } from './states/attack2.js';
 export const FSM = (() => {
 
     class FiniteStateMachine {
@@ -52,6 +54,8 @@ export const FSM = (() => {
             this._AddState('run', run.RunState);
             this._AddState('dance', dance.DanceState);
             this._AddState('jump', jump.JumpState);
+            this._AddState('attack1', attack1.Attack1State);
+            this._AddState('attack2', attack2.Attack2State);
         }
     };
 

@@ -35,6 +35,8 @@ export const idle = (() => {
             if (input._keys.dance) { this._parent.SetState('dance'); return; }
             if (input._keys.space) { this._parent.SetState('jump'); return; }
             if (input._keys.forward) { this._parent.SetState('walk'); return; }
+            if (input._keys.mouseAttack === 1) { this._parent.SetState('attack1'); input.keys["MouseAttack"] = 0; return; }
+            if (input._keys.mouseAttack === 2) { this._parent.SetState('attack2'); input.keys["MouseAttack"] = 0; return; }
             if (input._keys.backward) { this._parent.SetState('walk'); return; }
         }
     }

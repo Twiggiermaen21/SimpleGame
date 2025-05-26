@@ -37,6 +37,8 @@ export const walk = (() => {
             if (input._keys.shift) { this._parent.SetState('run'); return; }
             if (input._keys.space) { this._parent.SetState('jump'); return; }
             if (input._keys.dance) { this._parent.SetState('dance'); return; }
+            if (input._keys.attack1) { this._parent.SetState('attack1'); return; }
+            if (input._keys.attack2) { this._parent.SetState('attack2'); return; }
             if (!input._keys.forward && !input._keys.backward) { this._parent.SetState('idle'); return; }
         }
     }

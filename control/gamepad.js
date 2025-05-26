@@ -15,13 +15,34 @@ export default class Input {
         lock: false,
         sprint: false,
     };
-
+    mouseDownTime = 0;
+    mousePressed = false;
     constructor() {
         window.addEventListener("keydown", (e) => {
             this.keys[e.code] = true;
         });
         window.addEventListener("keyup", (e) => {
             this.keys[e.code] = false;
+        });
+        window.addEventListener("mousedown", (e) => {
+            if (e.button === 0) { // lewy przycisk myszy
+                this.mouseDownTime = performance.now();
+                this.mousePressed = true;
+            }
+        });
+
+        window.addEventListener("mouseup", (e) => {
+            if (e.button === 0) {
+                const heldTime = performance.now() - this.mouseDownTime;
+                this.mousePressed = false;
+
+                if (heldTime < 300) {
+                    this.keys["MouseAttack"] = 1
+                } else {
+                    this.keys["MouseAttack"] = 2
+                }
+
+            }
         });
     }
 
@@ -98,6 +119,22 @@ export default class Input {
         return pressed;
 
     }
+    get attack1() {
+        return this._wasMouseJustClicked(300);
+    }
+
+    get attack2() {
+        return this.mousePressed && performance.now() - this.mouseDownTime >= 300;
+    }
+
+    _wasMouseJustClicked(threshold = 300) {
+        if (!this.mousePressed && this.mouseDownTime > 0) {
+            const heldTime = performance.now() - this.mouseDownTime;
+            this.mouseDownTime = 0;
+            return heldTime < threshold;
+        }
+        return false;
+    }
 
     get _keys() {
         return {
@@ -108,6 +145,8 @@ export default class Input {
             space: this.keys["Space"],
             shift: this.keys["ShiftLeft"] || this.keys["ShiftRight"],
             dance: this.keys["Digit1"],
+            mouseAttack: this.keys["MouseAttack"], // ← nowy wirtualny "klawisz"
+
         };
     }
 }

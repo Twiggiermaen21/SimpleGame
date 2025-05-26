@@ -77,7 +77,9 @@ export default class Player extends Object3D {
         loadAnim('run', 'run.fbx');
         loadAnim('jump', 'jump.fbx');
         loadAnim('dance', 'dance.fbx');
-
+        loadAnim('attack1', 'attack1.fbx');
+        loadAnim('attack2', 'attack2.fbx');
+        
         this.initPhysics();
     }
 
