@@ -8,83 +8,104 @@ export default class Camera extends PerspectiveCamera {
         const far = 1000;
         super(fov, aspect, near, far);
 
+        // Parametry kamery OTS (over the shoulder)
         this.target = new Vector3();
         this.yaw = 0;
         this.pitch = 0;
-
         this.sensitivity = 0.002;
-        this.distance = 10;
-        this.verticalOffset = 2;
-        this.shoulderOffset = new Vector3(1.5, 1.5, 0);
+
+        // Kamera blisko gracza (3-4 jednostki to typowy efekt ramienia)
+        this.distance = 3.5;
+
+        // Boczny offset – np. 0.8 na X to „za prawym ramieniem” (ujemny X dla lewego)
+        this.shoulderOffset = new Vector3(0.8, 1, 0);
+        //                  ^--- X (prawe ramię), Y (lekko w górę), Z nie ruszamy
 
         this.pitchLimit = {
-            min: MathUtils.degToRad(-89),
-            max: MathUtils.degToRad(89),
+            min: MathUtils.degToRad(-60),
+            max: MathUtils.degToRad(45),
         };
 
-        // === Kolizje ===
         this.raycaster = new Raycaster();
         this.collisionOffset = 0.3;
-        this.collidableObjects = []; // Uzupełnij z zewnątrz: camera.collidableObjects = [...]
+        this.collidableObjects = [];
+
+        this._isRotating = false;
 
         this._initMouseControls();
     }
 
     _initMouseControls() {
-        window.addEventListener('mousemove', (e) => {
-            if (document.pointerLockElement !== document.body) return;
-            this.yaw -= e.movementX * this.sensitivity;
-            this.pitch += e.movementY * this.sensitivity;
-            this.pitch = MathUtils.clamp(this.pitch, this.pitchLimit.min, this.pitchLimit.max);
+        window.addEventListener('contextmenu', (e) => {
+            if (this._isRotating) e.preventDefault();
         });
 
-        window.addEventListener('click', () => {
-            document.body.requestPointerLock();
+        window.addEventListener('mousedown', (e) => {
+            if (e.button === 2) {
+                this._isRotating = true;
+                document.body.requestPointerLock();
+            }
+        });
+
+        window.addEventListener('mouseup', (e) => {
+            if (e.button === 2) {
+                this._isRotating = false;
+                document.exitPointerLock();
+            }
+        });
+
+        window.addEventListener('mousemove', (e) => {
+            if (this._isRotating && document.pointerLockElement === document.body) {
+                this.yaw -= e.movementX * this.sensitivity;
+                this.pitch += e.movementY * this.sensitivity;
+                this.pitch = MathUtils.clamp(this.pitch, this.pitchLimit.min, this.pitchLimit.max);
+            }
         });
 
         window.addEventListener('wheel', (e) => {
             const zoomSpeed = 0.5;
             this.distance += e.deltaY * 0.01 * zoomSpeed;
-            this.distance = MathUtils.clamp(this.distance, 2, 30);
+            this.distance = MathUtils.clamp(this.distance, 1.5, 8);
         });
     }
 
     update(player) {
         if (!player || !player.position) return;
 
-        // Punkt patrzenia (środek ciała)
         this.target.copy(player.position);
         this.target.y += 1.5;
 
-        // Planowane przesunięcie kamery
+        if (!this._isRotating) {
+            // Kamera zawsze za plecami gracza, plus 180° żeby patrzyła na przód modelu
+            this.yaw = player.rotation.y + Math.PI;
+        }
+
+        // Kamera blisko i po prawej stronie (over the shoulder)
         const cameraOffset = new Vector3(
             this.distance * Math.sin(this.yaw) * Math.cos(this.pitch),
             this.distance * Math.sin(this.pitch),
             this.distance * Math.cos(this.yaw) * Math.cos(this.pitch)
         );
 
-        // Przesunięcie boczne (ramię)
-        const sideOffset = new Vector3(1, 0, 0);
-        sideOffset.applyAxisAngle(new Vector3(0, 1, 0), this.yaw);
-        sideOffset.multiplyScalar(this.shoulderOffset.x);
+        // Tu: używamy bocznego offsetu, żeby być za ramieniem (prawe ramię = dodatni X)
+        const sideOffset = new Vector3(1, 0, 0)
+            .applyAxisAngle(new Vector3(0, 1, 0), this.yaw)
+            .multiplyScalar(this.shoulderOffset.x);
 
-        // Przesunięcie w pionie
+        // Wysokość kamery (Y)
         const verticalOffset = new Vector3(0, this.shoulderOffset.y, 0);
 
-        // Pozycja, do której kamera dąży
         const desiredPosition = this.target.clone()
             .add(cameraOffset)
             .add(sideOffset)
             .add(verticalOffset);
 
-        // === RAYCAST (kolizja)
+        // Raycast: kolizja z otoczeniem
         const direction = desiredPosition.clone().sub(this.target).normalize();
         this.raycaster.set(this.target, direction);
-
         const hits = this.raycaster.intersectObjects(this.collidableObjects, true);
 
         let finalPosition = desiredPosition;
-
         if (hits.length > 0 && hits[0].distance < this.distance) {
             const safeDistance = hits[0].distance - this.collisionOffset;
             finalPosition = this.target.clone().add(direction.multiplyScalar(Math.max(safeDistance, 0.1)));

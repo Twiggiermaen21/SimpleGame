@@ -1,56 +1,31 @@
+import * as THREE from 'three';
 import { Scene } from 'three';
 
 import Camera from './engine/camera';
-
 import Light from './engine/Light';
 import Graphic from './engine/graphic';
-import loader from './tool/loader';
 import physic from './engine/physic';
+import loadSkybox from './tool/loadSkybox';
 import World from './entity/world';
 import Player from './entity/player/player';
 import Enemy from './entity/enemy/enemy';
-
-import * as THREE from 'three'
 import BoxEntity from './entity/box';
-const visuals = await loader('./glb/world.glb');
 
-// === SETUP ===
-const scene = new Scene();
-const camera = new Camera();
-const world = new World(visuals, physic);
-const light = new Light();
-
-const box = new BoxEntity(new THREE.Vector3(0, 10, 0), physic); // startuje 10 jednostek nad ziemią
-// const player = await Player.create('player/skin.fbx', physic);
-const player = await Player.create('./entity/player/tung/skin.fbx', physic);
-
-
-const load = new THREE.CubeTextureLoader();
-const texture = load.load([
-    './cubeBox/posx.jpg',
-    './cubeBox/negx.jpg',
-    './cubeBox/posy.jpg',
-    './cubeBox/negy.jpg',
-    './cubeBox/posz.jpg',
-    './cubeBox/negz.jpg',
-]);
-
-const enemies = [];
-
+// Enemy patrol paths
 const patrolGroups = [
-    [ // patrol 1 – kwadrat
+    [
         new THREE.Vector3(10, 10, -20),
         new THREE.Vector3(15, 10, -25),
         new THREE.Vector3(15, 10, -25),
         new THREE.Vector3(10, 10, -20),
     ],
-    [ // patrol 2 – kwadrat
+    [
         new THREE.Vector3(-10, 5, -15),
         new THREE.Vector3(-5, 5, -15),
         new THREE.Vector3(-5, 5, -15),
         new THREE.Vector3(-10, 5, -15),
     ],
-    [ // patrol 3 – prostokąt
+    [
         new THREE.Vector3(10, 5, -15),
         new THREE.Vector3(15, 5, -15),
         new THREE.Vector3(15, 5, -12),
@@ -58,43 +33,90 @@ const patrolGroups = [
     ],
 ];
 
-for (const path of patrolGroups) {
-    const enemy = await Enemy.create(
-        path,
-        physic,
-        './entity/player/player/skin.fbx',            // Twój model
-        './entity/player/player/'          // Folder z idle.fbx, walk.fbx, run.fbx
-    );
-    enemy.setTarget(player);
-    // enemy.setObstacles([world]);
-    scene.add(enemy.model);
-    enemies.push(enemy);
+function showLoadingScreen() {
+    document.getElementById('loading-screen').style.display = 'flex';
+}
+function hideLoadingScreen() {
+    document.getElementById('loading-screen').style.display = 'none';
+}
+function setLoadingText(txt) {
+    document.getElementById('loading-text').textContent = txt;
+}
+function setLoadingProgress(perc) {
+    document.getElementById('loading-progress').textContent = perc ? `${perc}%` : '';
+}
+function showStartScreen() {
+    document.getElementById('start-screen').style.display = 'flex';
+}
+function hideStartScreen() {
+    document.getElementById('start-screen').style.display = 'none';
+}
+
+function showCrosshair() {
+    document.getElementById('crosshair').style.display = 'block';
+}
+function hideCrosshair() {
+    document.getElementById('crosshair').style.display = 'none';
+}
+
+// === ASYNC INIT ===
+async function startGame() {
+
+    // Załaduj świat i tekstury
+    const scene = new Scene();
+    scene.background = loadSkybox();
+    // Światło, kamera, świat, obiekty
+    const light = new Light();
+    const camera = new Camera();
+    const world = await World.create('./glb/world.glb', physic);
+    const box = new BoxEntity(new THREE.Vector3(0, 10, 0), physic);
+    const player = await Player.create('./entity/player/tung/skin.fbx', physic);
+
+    // Tworzenie wrogów
+    const enemies = [];
+    for (const path of patrolGroups) {
+        const enemy = await Enemy.create(path, physic,
+            './entity/player/player/skin.fbx',       // Model
+            './entity/player/player/'                // Folder z animacjami
+        );
+        enemy.setTarget(player);
+        scene.add(enemy.model);
+        enemies.push(enemy);
+    }
+
+    // Dodanie obiektów do sceny
+    scene.add(light);
+    scene.add(world);
+    scene.add(box);
+    scene.add(player);
+
+    camera.collidableObjects = [world];
+
+
+
+
+    // Graphic / render loop setup
+    const graphic = new Graphic(scene, camera);
+    graphic.onUpdate((dt) => {
+        physic.step();
+        player.update(dt, enemies);
+        enemies.forEach(enemy => enemy.update(dt));
+        box.update();
+        camera.update(player);
+    });
+
+
+
 
 }
 
 
-
-scene.background = texture
-// === CREATE WORLD ===
-// scene.add(new THREE.AxesHelper(5));
-// scene.add(new THREE.GridHelper(100, 100));
-scene.add(light);
-scene.add(world);
-scene.add(box);
-scene.add(player);
-
-
-camera.collidableObjects = [world];
-const graphic = new Graphic(scene, camera);
-
-
-graphic.onUpdate((dt) => {
-    physic.step();
-    player.update(dt, enemies);
-    for (const enemy of enemies) {
-        enemy.update(dt);
-    }
-    box.update();
-    camera.update(player)
-});
+document.getElementById('start-button').onclick = async () => {
+    hideStartScreen();
+    showLoadingScreen();
+    // Tu start gry, ładowanie świata, gracza, assetów, itd.
+    await startGame(); // Twoja funkcja
+    hideLoadingScreen();
+    showCrosshair();
+}
 
