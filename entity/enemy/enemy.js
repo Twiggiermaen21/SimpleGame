@@ -1,5 +1,3 @@
-// Enemy.js – Klasa Enemy, AI, patrol, fizyka, animacje
-
 import * as THREE from 'three';
 import { RigidBodyDesc, ColliderDesc } from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
@@ -25,6 +23,78 @@ export default class Enemy {
 
         this.patrolPath = [];
         this.currentPatrolIndex = 0;
+
+        // === Życie i pasek życia ===
+        this.hp = 100;
+        this.isDead = false;
+
+        this._createHealthBar2D();
+    }
+
+    // Pasek życia 2D (HTML)
+    _createHealthBar2D() {
+        this.healthBar2D = document.createElement('div');
+        this.healthBar2D.className = 'enemy-healthbar';
+        this.healthBar2DInner = document.createElement('div');
+        this.healthBar2DInner.className = 'enemy-healthbar-inner';
+        this.healthBar2DInner.style.width = '100%';
+        this.healthBar2D.appendChild(this.healthBar2DInner);
+        document.body.appendChild(this.healthBar2D);
+    }
+
+    updateHealthBar2D(camera) {
+        if (!this.healthBar2D) return;
+
+        const enemyWorldPos = new THREE.Vector3();
+        this.model.getWorldPosition(enemyWorldPos);
+        enemyWorldPos.y += this.halfHeight * 1.3; // Nad głową
+
+        const vector = enemyWorldPos.project(camera);
+
+        const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
+        const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
+
+        this.healthBar2D.style.left = `${x}px`;
+        this.healthBar2D.style.top = `${y}px`;
+
+        const perc = Math.max(0, this.hp) / 100 * 100;
+        this.healthBar2DInner.style.width = perc + '%';
+
+        if (perc > 60) this.healthBar2DInner.style.background = '#0f0';
+        else if (perc > 30) this.healthBar2DInner.style.background = '#ff0';
+        else this.healthBar2DInner.style.background = '#f00';
+
+        if (vector.z < -1 || vector.z > 1) {
+            this.healthBar2D.style.display = 'none';
+        } else {
+            this.healthBar2D.style.display = 'block';
+        }
+    }
+
+    removeHealthBar2D() {
+        if (this.healthBar2D && this.healthBar2D.parentNode) {
+            this.healthBar2D.parentNode.removeChild(this.healthBar2D);
+        }
+    }
+
+    takeDamage(amount) {
+        if (this.isDead) return;
+        this.hp = Math.max(0, this.hp - amount);
+        if (this.hp <= 0 && !this.isDead) {
+            this.die();
+        }
+    }
+
+    die() {
+        this.isDead = true;
+        this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
+        if (this.animations['idle']) {
+            Object.values(this.animations).forEach(a => a.action.stop());
+        }
+        if (this.animations['dead']) {
+            this.animations['dead'].action.reset().play();
+        }
+        this.removeHealthBar2D();
     }
 
     async loadModel(path, animPath) {
@@ -64,6 +134,8 @@ export default class Enemy {
         loadAnim('idle', 'idle.fbx');
         loadAnim('walk', 'walk.fbx');
         loadAnim('run', 'run.fbx');
+        // (opcjonalnie) dead.fbx dla animacji śmierci
+        loadAnim('dead', 'dead.fbx');
     }
 
     _initPhysics(position) {
@@ -84,6 +156,11 @@ export default class Enemy {
     }
 
     update(deltaTime) {
+        if (this.isDead) {
+            if (this._mixer) this._mixer.update(deltaTime);
+            return;
+        }
+
         if (!this.rigidBody || this.patrolPath.length === 0) return;
 
         const pos = this.rigidBody.translation();

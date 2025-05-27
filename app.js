@@ -38,16 +38,9 @@ function showLoadingScreen() {
 }
 function hideLoadingScreen() {
     document.getElementById('loading-screen').style.display = 'none';
+    document.body.style.cursor = 'none';
 }
-function setLoadingText(txt) {
-    document.getElementById('loading-text').textContent = txt;
-}
-function setLoadingProgress(perc) {
-    document.getElementById('loading-progress').textContent = perc ? `${perc}%` : '';
-}
-function showStartScreen() {
-    document.getElementById('start-screen').style.display = 'flex';
-}
+
 function hideStartScreen() {
     document.getElementById('start-screen').style.display = 'none';
 }
@@ -55,15 +48,14 @@ function hideStartScreen() {
 function showCrosshair() {
     document.getElementById('crosshair').style.display = 'block';
 }
-function hideCrosshair() {
-    document.getElementById('crosshair').style.display = 'none';
-}
+
 
 // === ASYNC INIT ===
 async function startGame() {
 
     // Załaduj świat i tekstury
     const scene = new Scene();
+
     scene.background = loadSkybox();
     // Światło, kamera, świat, obiekty
     const light = new Light();
@@ -100,7 +92,10 @@ async function startGame() {
     graphic.onUpdate((dt) => {
         physic.step();
         player.update(dt, enemies);
-        enemies.forEach(enemy => enemy.update(dt));
+        enemies.forEach(enemy => {
+            enemy.update(dt);
+            enemy.updateHealthBar2D(camera);
+        });
         box.update();
         camera.update(player);
     });
