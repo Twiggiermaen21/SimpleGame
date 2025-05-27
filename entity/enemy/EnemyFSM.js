@@ -12,8 +12,7 @@ export default class EnemyFSM {
         this.state = newState;
 
         const anim = this.enemy.animations[newState];
-        console.log('Enemy state:', newState, 'has anim:', !!anim);
-
+        
         if (anim) {
             Object.values(this.enemy.animations).forEach(a => a.action.stop());
             anim.action.reset().play();

@@ -10,21 +10,22 @@ import Player from './entity/player/player';
 import Enemy from './entity/enemy/enemy';
 import BoxEntity from './entity/box';
 import PotionSpawner from './entity/potion/potionSpawner';
-
+import TreasureSpawner from './entity/treasure/tresureSpawner';
 
 // Enemy patrol paths
 const patrolGroups = [
+
     [
-        new THREE.Vector3(10, 10, -20),
-        new THREE.Vector3(15, 10, -25),
-        new THREE.Vector3(15, 10, -25),
-        new THREE.Vector3(10, 10, -20),
+        new THREE.Vector3(-10, 5, -15),
+        new THREE.Vector3(-5, 5, -15),
+        new THREE.Vector3(-5, 5, -15),
+        new THREE.Vector3(-10, 5, -15),
     ],
     [
-        new THREE.Vector3(-10, 5, -15),
-        new THREE.Vector3(-5, 5, -15),
-        new THREE.Vector3(-5, 5, -15),
-        new THREE.Vector3(-10, 5, -15),
+        new THREE.Vector3(4, 5, -60),
+        new THREE.Vector3(4, 5, -60),
+        new THREE.Vector3(8, 5, -60),
+        new THREE.Vector3(8, 15, -60),
     ],
     [
         new THREE.Vector3(10, 5, -15),
@@ -32,13 +33,22 @@ const patrolGroups = [
         new THREE.Vector3(15, 5, -12),
         new THREE.Vector3(10, 5, -12),
     ],
+    [
+        new THREE.Vector3(-8, 5, -60),
+        new THREE.Vector3(-8, 5, -60),
+        new THREE.Vector3(-4, 5, -62),
+        new THREE.Vector3(-4, 5, -62),
+    ],
 ];
 const potionPositions = [
     new THREE.Vector3(0, 10, 10),
     new THREE.Vector3(-8, 10, -40),
     new THREE.Vector3(12, 10, 30),
 ];
+const treasurePositions = [
+    new THREE.Vector3(0, 5, -10),
 
+];
 
 
 // === ASYNC INIT ===
@@ -82,6 +92,15 @@ async function startGame() {
 
     // Tworzenie i dodanie do sceny:
     const potionSpawner = new PotionSpawner(scene, potionPositions, onPotionPickup);
+    function onTreasurePickup(treasure) {
+        // Przykład: dodanie punktów, wyświetlenie komunikatu
+        console.log('Znalazłeś skarb!');
+        // Przykład: respawn po 30 sekundach
+        setTimeout(() => treasure.respawn(), 30000);
+    }
+
+    // Tworzenie i dodanie do sceny:
+    const treasureSpawner = new TreasureSpawner(scene, treasurePositions, onTreasurePickup);
 
 
 
@@ -90,6 +109,8 @@ async function startGame() {
     graphic.onUpdate((dt) => {
         physic.step();
         player.update(dt, enemies);
+        // console.log(player.position);
+
         enemies.forEach(enemy => {
             enemy.update(dt);
             enemy.updateHealthBar2D(camera);
@@ -97,6 +118,7 @@ async function startGame() {
         box.update();
         camera.update(player);
         potionSpawner.update(player);
+        treasureSpawner.update(player);
     });
 
 }
