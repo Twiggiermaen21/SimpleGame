@@ -30,7 +30,7 @@ export default class Player extends Object3D {
         this.healthBar = new HealthBar(); // albo przekazuj elementId jeśli chcesz
         this.hp = 100;
         this.isDead = false;
-
+        this._attackHasHit = false;
         this._animations = {};
         this._mixer = null;
         this._jumpScheduled = false;
@@ -141,6 +141,26 @@ export default class Player extends Object3D {
                 this.lastHitTime = now;
             }
         }
+
+        const isAttacking = this._stateMachine && this._stateMachine._currentState &&
+            (this._stateMachine._currentState.Name === 'attack1' || this._stateMachine._currentState.Name === 'attack2');
+
+        if (isAttacking && !this._attackHasHit) {
+            for (let enemy of enemies) {
+                const dist = this.position.distanceTo(enemy.model.position);
+                if (dist < 1.5 && !enemy.isDead) {
+                    enemy.takeDamage(25); // lub ile chcesz
+                    this._attackHasHit = true; // żeby nie spamować obrażeń co klatkę
+                }
+            }
+        }
+        // Po zakończeniu ataku (animacji) resetujesz flagę:
+        if (!isAttacking) {
+            this._attackHasHit = false;
+        }
+
+
+
         this.updatePhysic();
     }
 

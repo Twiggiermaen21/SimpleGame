@@ -24,14 +24,12 @@ export default class Enemy {
         this.patrolPath = [];
         this.currentPatrolIndex = 0;
 
-        // === Życie i pasek życia ===
         this.hp = 100;
         this.isDead = false;
 
         this._createHealthBar2D();
     }
 
-    // Pasek życia 2D (HTML)
     _createHealthBar2D() {
         this.healthBar2D = document.createElement('div');
         this.healthBar2D.className = 'enemy-healthbar';
@@ -44,22 +42,17 @@ export default class Enemy {
 
     updateHealthBar2D(camera) {
         if (!this.healthBar2D) return;
-
         const enemyWorldPos = new THREE.Vector3();
         this.model.getWorldPosition(enemyWorldPos);
-        enemyWorldPos.y += this.halfHeight * 1.3; // Nad głową
-
+        enemyWorldPos.y += this.halfHeight * 1.3;
         const vector = enemyWorldPos.project(camera);
-
         const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
         const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
-
         this.healthBar2D.style.left = `${x}px`;
         this.healthBar2D.style.top = `${y}px`;
 
         const perc = Math.max(0, this.hp) / 100 * 100;
         this.healthBar2DInner.style.width = perc + '%';
-
         if (perc > 60) this.healthBar2DInner.style.background = '#0f0';
         else if (perc > 30) this.healthBar2DInner.style.background = '#ff0';
         else this.healthBar2DInner.style.background = '#f00';
@@ -86,13 +79,18 @@ export default class Enemy {
     }
 
     die() {
+        if (this.isDead) return;
         this.isDead = true;
         this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
         if (this.animations['idle']) {
             Object.values(this.animations).forEach(a => a.action.stop());
         }
         if (this.animations['dead']) {
-            this.animations['dead'].action.reset().play();
+            this.animations['dead'].action
+                .reset()
+                .setLoop(THREE.LoopOnce, 1);
+            this.animations['dead'].action.clampWhenFinished = true;
+            this.animations['dead'].action.play();
         }
         this.removeHealthBar2D();
     }
@@ -100,7 +98,6 @@ export default class Enemy {
     async loadModel(path, animPath) {
         const loader = new FBXLoader();
         const fbx = await loader.loadAsync(path);
-
         fbx.scale.set(0.01, 0.01, 0.01);
         fbx.position.y = -this.halfHeight;
         fbx.traverse(child => {
@@ -113,7 +110,6 @@ export default class Enemy {
         const container = new THREE.Object3D();
         container.add(fbx);
         this.model = container;
-
         this._mixer = new THREE.AnimationMixer(fbx);
 
         // Animacje
@@ -124,18 +120,20 @@ export default class Enemy {
         const loadAnim = (name, file) => {
             animLoader.load(animPath + file, (anim) => {
                 const clip = anim.animations[0];
-                this.animations[name] = {
-                    clip,
-                    action: this._mixer.clipAction(clip)
-                };
+                const action = this._mixer.clipAction(clip);
+                if (name === 'dead') {
+                    action.setLoop(THREE.LoopOnce, 1);
+                    action.clampWhenFinished = true;
+                }
+                this.animations[name] = { clip, action };
             });
         };
 
         loadAnim('idle', 'idle.fbx');
         loadAnim('walk', 'walk.fbx');
         loadAnim('run', 'run.fbx');
-        // (opcjonalnie) dead.fbx dla animacji śmierci
         loadAnim('dead', 'dead.fbx');
+        loadAnim('attack', 'attack.fbx'); // nowa animacja ataku
     }
 
     _initPhysics(position) {
@@ -143,11 +141,9 @@ export default class Enemy {
         const desc = RigidBodyDesc.dynamic()
             .setTranslation(position.x, startY, position.z)
             .lockRotations();
-
         this.rigidBody = this.physicsWorld.createRigidBody(desc);
         const collider = ColliderDesc.cuboid(0.5, this.halfHeight, 0.5);
         this.physicsWorld.createCollider(collider, this.rigidBody);
-
         this.model.position.set(position.x, startY, position.z);
     }
 
@@ -160,7 +156,6 @@ export default class Enemy {
             if (this._mixer) this._mixer.update(deltaTime);
             return;
         }
-
         if (!this.rigidBody || this.patrolPath.length === 0) return;
 
         const pos = this.rigidBody.translation();
@@ -176,7 +171,13 @@ export default class Enemy {
             this.model.position.distanceTo(this.target.position) < this.detectionRange
         ) {
             dist = this.model.position.distanceTo(this.target.position);
-            if (dist > this.stopRange) {
+
+            // Jeśli bardzo blisko gracza, atakuj!
+            if (dist < this.stopRange) {
+                this.fsm.setState('attack');
+                this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
+            } else {
+                this.fsm.setState('run');
                 direction = new THREE.Vector3().subVectors(this.target.position, this.model.position).normalize();
                 const currentVel = this.rigidBody.linvel();
                 const desiredSpeed = this.speed * 1.5;
@@ -185,15 +186,10 @@ export default class Enemy {
                     y: currentVel.y,
                     z: direction.z * desiredSpeed,
                 }, true);
-            } else {
-                this.rigidBody.setLinvel({ x: 0, y: this.rigidBody.linvel().y, z: 0 }, true);
-                if (this.animations['idle']) {
-                    Object.values(this.animations).forEach(a => a.action.stop());
-                    this.animations['idle'].action.reset().play();
-                }
             }
         } else {
             // Patrol
+            this.fsm.setState('walk');
             const targetPoint = this.patrolPath[this.currentPatrolIndex];
             direction = new THREE.Vector3().subVectors(targetPoint, this.model.position);
             dist = direction.length();

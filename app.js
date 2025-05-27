@@ -1,6 +1,5 @@
 import * as THREE from 'three';
 import { Scene } from 'three';
-
 import Camera from './engine/camera';
 import Light from './engine/Light';
 import Graphic from './engine/graphic';
@@ -10,6 +9,8 @@ import World from './entity/world';
 import Player from './entity/player/player';
 import Enemy from './entity/enemy/enemy';
 import BoxEntity from './entity/box';
+import PotionSpawner from './entity/potion/potionSpawner';
+
 
 // Enemy patrol paths
 const patrolGroups = [
@@ -32,22 +33,12 @@ const patrolGroups = [
         new THREE.Vector3(10, 5, -12),
     ],
 ];
+const potionPositions = [
+    new THREE.Vector3(0, 10, 10),
+    new THREE.Vector3(-8, 10, -40),
+    new THREE.Vector3(12, 10, 30),
+];
 
-function showLoadingScreen() {
-    document.getElementById('loading-screen').style.display = 'flex';
-}
-function hideLoadingScreen() {
-    document.getElementById('loading-screen').style.display = 'none';
-    document.body.style.cursor = 'none';
-}
-
-function hideStartScreen() {
-    document.getElementById('start-screen').style.display = 'none';
-}
-
-function showCrosshair() {
-    document.getElementById('crosshair').style.display = 'block';
-}
 
 
 // === ASYNC INIT ===
@@ -55,7 +46,6 @@ async function startGame() {
 
     // Załaduj świat i tekstury
     const scene = new Scene();
-
     scene.background = loadSkybox();
     // Światło, kamera, świat, obiekty
     const light = new Light();
@@ -84,6 +74,14 @@ async function startGame() {
 
     camera.collidableObjects = [world];
 
+    function onPotionPickup(potion) {
+        player.healthBar.increase(25)
+        // Możesz zrespawnować po czasie:
+        setTimeout(() => potion.respawn(), 10000); // 10 sekund
+    }
+
+    // Tworzenie i dodanie do sceny:
+    const potionSpawner = new PotionSpawner(scene, potionPositions, onPotionPickup);
 
 
 
@@ -98,12 +96,13 @@ async function startGame() {
         });
         box.update();
         camera.update(player);
+        potionSpawner.update(player);
     });
 
-
-
-
 }
+
+
+
 
 
 document.getElementById('start-button').onclick = async () => {
@@ -115,3 +114,19 @@ document.getElementById('start-button').onclick = async () => {
     showCrosshair();
 }
 
+
+function showLoadingScreen() {
+    document.getElementById('loading-screen').style.display = 'flex';
+}
+function hideLoadingScreen() {
+    document.getElementById('loading-screen').style.display = 'none';
+    document.body.style.cursor = 'none';
+}
+
+function hideStartScreen() {
+    document.getElementById('start-screen').style.display = 'none';
+}
+
+function showCrosshair() {
+    document.getElementById('crosshair').style.display = 'block';
+}
