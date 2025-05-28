@@ -114,7 +114,7 @@ export default class Player extends Object3D {
             for (let enemy of enemies) {
                 const d = this.position.distanceTo(enemy.model.position);
                 if (d < 1.5 && !enemy.isDead) {
-                    enemy.takeDamage(125);
+                    enemy.takeDamage(25);
                     this._attackHasHit = true;
                 }
             }

@@ -80,7 +80,7 @@ async function startGame() {
     // Światło, kamera, świat, obiekty
     const light = new Light();
     const camera = new Camera();
-    const world = await World.create('./models/world.glb', physic);
+    const world = await World.create('./public/models/world.glb', physic);
     const box = new BoxEntity(new THREE.Vector3(0, 10, 0), physic);
     const player = await Player.create(new THREE.Vector3(0, 15, 0), physic, './entity/player/tung/skin.fbx', './entity/player/tung/');
 
