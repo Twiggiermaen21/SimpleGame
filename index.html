@@ -5,6 +5,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Game</title>
+    <link rel="stylesheet" href="ui.css">
+
     <style>
         html,
         body {
@@ -23,34 +25,7 @@
             height: 100vh;
         }
 
-        #ui {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            pointer-events: none;
-            z-index: 10;
-        }
 
-        #health-container {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            width: 200px;
-            height: 25px;
-            background-color: #444;
-            border: 2px solid #222;
-            border-radius: 5px;
-            overflow: hidden;
-        }
-
-        #health-bar {
-            height: 100%;
-            width: 100%;
-            background-color: #0f0;
-            transition: width 0.2s ease,
-                background-color 0.2s;
-        }
 
         #game-over {
             position: absolute;
@@ -112,6 +87,7 @@
         }
 
 
+
         .enemy-healthbar {
             position: absolute;
             width: 60px;
@@ -159,8 +135,21 @@
     <div id="ui">
         <div id="health-container">
             <div id="health-bar"></div>
+            <span id="health-label">
+                <span class="icon">❤️</span>
+                Health
+            </span>
+        </div>
+        <div id="treasure-container">
+            <div id="treasure-bar"></div>
+            <span id="treasure-label">
+                <span class="icon">💰</span>
+                <span id="treasure-count">0</span>/<span id="treasure-max">5</span>
+            </span>
         </div>
     </div>
+                                                                                                         
+
     <div id="crosshair"></div>
 
     <div id="game-over" style="display:none;">

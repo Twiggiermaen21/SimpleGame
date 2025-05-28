@@ -11,7 +11,7 @@ import Enemy from './entity/enemy/enemy';
 import BoxEntity from './entity/box';
 import PotionSpawner from './entity/potion/potionSpawner';
 import TreasureSpawner from './entity/treasure/tresureSpawner';
-
+import TreasureCounter from './entity/treasure/treasureCounter.js';
 // Enemy patrol paths
 const patrolGroups = [
 
@@ -93,7 +93,7 @@ async function startGame() {
     // Tworzenie i dodanie do sceny:
     const potionSpawner = new PotionSpawner(scene, potionPositions, onPotionPickup);
     function onTreasurePickup(treasure) {
-        // Przykład: dodanie punktów, wyświetlenie komunikatu
+        treasureCounter.increment();
         console.log('Znalazłeś skarb!');
         // Przykład: respawn po 30 sekundach
         setTimeout(() => treasure.respawn(), 30000);
@@ -101,7 +101,8 @@ async function startGame() {
 
     // Tworzenie i dodanie do sceny:
     const treasureSpawner = new TreasureSpawner(scene, treasurePositions, onTreasurePickup);
-
+    const treasureCounter = new TreasureCounter();
+    treasureCounter.setMax(treasurePositions.length);
 
 
     // Graphic / render loop setup
