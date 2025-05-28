@@ -23,9 +23,9 @@ export const dead = (() => {
             action.setEffectiveTimeScale(1.0);
             action.setEffectiveWeight(1.0);
             action.reset();
-            action.time = 0.0;
+            action.setLoop(THREE.LoopOnce, 1);
+
             action.clampWhenFinished = true;
-            action.setLoop(THREE.LoopOnce, 1); // <-- TO JEST KLUCZOWE!
 
             if (prevState) {
                 const prevAction = this._parent._proxy._animations[prevState.Name]?.action;

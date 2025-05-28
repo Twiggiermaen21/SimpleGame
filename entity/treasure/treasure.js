@@ -1,6 +1,5 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
-
+import { loadModel } from '../../tool/modelLoader.js';
 export default class Treasure extends THREE.Object3D {
     constructor(position, onPickup) {
         super();
@@ -14,21 +13,12 @@ export default class Treasure extends THREE.Object3D {
         this.position.copy(position);
 
         // Ścieżka do modelu GLB wpisana w klasie
-        const glbPath = '/models/treasure.glb';
-
-        // Ładuj model GLB
-        const loader = new GLTFLoader();
-        loader.load(glbPath, (gltf) => {
-            this.mesh = gltf.scene;
-            this.mesh.traverse(child => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
-            });
-            this.mesh.scale.set(0.01, 0.01, 0.01); // Zmień skalę, jeśli model za duży/mały
-            this.add(this.mesh);
-        });
+        loadModel('/models/treasure.glb', 0.01)
+            .then(model => {
+                this.mesh = model;
+                this.add(this.mesh);
+            })
+            .catch(err => console.error('Error loading treasure:', err));
     }
 
     update(player) {

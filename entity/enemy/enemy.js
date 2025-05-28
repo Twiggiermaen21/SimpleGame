@@ -1,11 +1,12 @@
 import * as THREE from 'three';
-import { RigidBodyDesc, ColliderDesc } from '@dimforge/rapier3d-compat';
 import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import EnemyFSM from './EnemyFSM.js';
+import { initPhysicsBody } from '../../tool/function.js';
+import { loadModel } from '../../tool/modelLoader.js'; // wspólny loader dla FBX/GLB
 
 export default class Enemy {
-    constructor(physicsWorld) {
-        this.physicsWorld = physicsWorld;
+    constructor(physic) {
+        this.physic = physic;
         this.speed = 1;
         this.detectionRange = 15;
         this.stopRange = 1.5;
@@ -40,24 +41,34 @@ export default class Enemy {
         document.body.appendChild(this.healthBar2D);
     }
 
-    updateHealthBar2D(camera) {
+    updateHealthBar2D(camera, playerPosition) {
         if (!this.healthBar2D) return;
+
         const enemyWorldPos = new THREE.Vector3();
         this.model.getWorldPosition(enemyWorldPos);
-        enemyWorldPos.y += this.halfHeight * 1.3;
+        enemyWorldPos.y += this.halfHeight * 2.2;
+
+        // 📏 Oblicz dystans do gracza
+        const distToPlayer = enemyWorldPos.distanceTo(playerPosition);
+        console.log(`Enemy distance to player: ${distToPlayer.toFixed(2)}`);
+
+
+        // 🔭 Pozycjonowanie względem kamery
         const vector = enemyWorldPos.project(camera);
         const x = (vector.x * 0.5 + 0.5) * window.innerWidth;
         const y = (-vector.y * 0.5 + 0.5) * window.innerHeight;
         this.healthBar2D.style.left = `${x}px`;
         this.healthBar2D.style.top = `${y}px`;
 
+        // ❤️ Pasek zdrowia
         const perc = Math.max(0, this.hp) / 100 * 100;
         this.healthBar2DInner.style.width = perc + '%';
         if (perc > 60) this.healthBar2DInner.style.background = '#0f0';
         else if (perc > 30) this.healthBar2DInner.style.background = '#ff0';
         else this.healthBar2DInner.style.background = '#f00';
 
-        if (vector.z < -1 || vector.z > 1) {
+        // 👁️ Dodatkowa widoczność względem kamery
+        if (vector.z < -1 || vector.z > 1 || distToPlayer > 50) {
             this.healthBar2D.style.display = 'none';
         } else {
             this.healthBar2D.style.display = 'block';
@@ -96,21 +107,13 @@ export default class Enemy {
     }
 
     async loadModel(path, animPath) {
-        const loader = new FBXLoader();
-        const fbx = await loader.loadAsync(path);
-        fbx.scale.set(0.01, 0.01, 0.01);
-        fbx.position.y = -this.halfHeight;
-        fbx.traverse(child => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
-
+        const enemy = await loadModel(path, 0.01);
+        enemy.position.set(0, -0.5, 0);
         const container = new THREE.Object3D();
-        container.add(fbx);
+        container.add(enemy);
+
         this.model = container;
-        this._mixer = new THREE.AnimationMixer(fbx);
+        this._mixer = new THREE.AnimationMixer(enemy);
 
         // Animacje
         const manager = new THREE.LoadingManager();
@@ -137,14 +140,8 @@ export default class Enemy {
     }
 
     _initPhysics(position) {
-        const startY = position.y + this.halfHeight;
-        const desc = RigidBodyDesc.dynamic()
-            .setTranslation(position.x, startY, position.z)
-            .lockRotations();
-        this.rigidBody = this.physicsWorld.createRigidBody(desc);
-        const collider = ColliderDesc.cuboid(0.5, this.halfHeight, 0.5);
-        this.physicsWorld.createCollider(collider, this.rigidBody);
-        this.model.position.set(position.x, startY, position.z);
+        this.rigidBody = initPhysicsBody(this.physic, position);
+        this.model.position.set(position.x, position.y, position.z);
     }
 
     setTarget(target) {
@@ -180,7 +177,7 @@ export default class Enemy {
                 this.fsm.setState('run');
                 direction = new THREE.Vector3().subVectors(this.target.position, this.model.position).normalize();
                 const currentVel = this.rigidBody.linvel();
-                const desiredSpeed = this.speed * 1.5;
+                const desiredSpeed = this.speed * 2;
                 this.rigidBody.setLinvel({
                     x: direction.x * desiredSpeed,
                     y: currentVel.y,
@@ -194,7 +191,8 @@ export default class Enemy {
             direction = new THREE.Vector3().subVectors(targetPoint, this.model.position);
             dist = direction.length();
 
-            if (dist < 0.3) {
+            if (dist < 1) {
+                // console.log(`Enemy reached point ${this.currentPatrolIndex}`);
                 this.currentPatrolIndex = (this.currentPatrolIndex + 1) % this.patrolPath.length;
             }
 
@@ -219,8 +217,8 @@ export default class Enemy {
         }
     }
 
-    static async create(patrolPath, physicsWorld, modelPath, animPath) {
-        const enemy = new Enemy(physicsWorld);
+    static async create(patrolPath, physic, modelPath, animPath) {
+        const enemy = new Enemy(physic);
         enemy.patrolPath = patrolPath.map(p => p.clone());
         await enemy.loadModel(modelPath, animPath);
         enemy._initPhysics(patrolPath[0]);

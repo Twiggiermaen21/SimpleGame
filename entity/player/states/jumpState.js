@@ -36,6 +36,7 @@ export const jump = (() => {
 
         _Finished() {
             const rb = this._parent._proxy.rigidBody;
+
             const velY = rb.linvel().y;
             const onGround = Math.abs(velY) < 0.01;
             if (onGround) {
@@ -51,6 +52,7 @@ export const jump = (() => {
             const elapsed = now - this._jumpStartTime;
 
             const rb = this._parent._proxy.rigidBody;
+
             const vel = rb.linvel();
 
             if (!this._hasJumped && elapsed > 650) {

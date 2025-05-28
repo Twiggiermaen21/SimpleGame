@@ -1,35 +1,25 @@
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+import { loadModel } from '../../tool/modelLoader.js';
 
 export default class Potion extends THREE.Object3D {
     constructor(position, onPickup) {
         super();
-
         this.mesh = null;
         this.collected = false;
         this.onPickup = onPickup;
         this.time = Math.random() * Math.PI * 2;
-
-        // Ustaw pozycję mikstury
         this.position.copy(position);
 
         // === ŚCIEŻKA do Twojego modelu GLB (wrzuć do public/) ===
-        const glbPath = '/models/potion.glb'; // <- popraw ścieżkę jak potrzeba
-
-        // Wczytaj model GLB mikstury
-        const loader = new GLTFLoader();
-        loader.load(glbPath, (gltf) => {
-            this.mesh = gltf.scene;
-            this.mesh.traverse(child => {
-                if (child.isMesh) {
-                    child.castShadow = true;
-                    child.receiveShadow = true;
-                }
-            });
-            this.mesh.scale.set(1, 1, 1); // dostosuj skalę, jeśli model za duży/mały
-            this.add(this.mesh);
-        });
+        loadModel('/models/potion.glb', 1)
+            .then(model => {
+                this.mesh = model;
+                this.add(this.mesh);
+            })
+            .catch(err => console.error('Error loading treasure:', err));
     }
+
+
 
     update(player) {
         if (this.collected || !this.mesh) return;

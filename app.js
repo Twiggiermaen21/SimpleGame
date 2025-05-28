@@ -23,9 +23,8 @@ const patrolGroups = [
     ],
     [
         new THREE.Vector3(4, 5, -60),
-        new THREE.Vector3(4, 5, -60),
-        new THREE.Vector3(8, 5, -60),
-        new THREE.Vector3(8, 15, -60),
+        new THREE.Vector3(8, 5, -50),
+
     ],
     [
         new THREE.Vector3(10, 5, -15),
@@ -39,15 +38,36 @@ const patrolGroups = [
         new THREE.Vector3(-4, 5, -62),
         new THREE.Vector3(-4, 5, -62),
     ],
+    [ // front – ruch w Z
+        new THREE.Vector3(19.14, -3, -171.2),
+        new THREE.Vector3(19.14, -3, -167.2)
+    ],
+    [ // right – ruch w Z
+        new THREE.Vector3(35.9, -3, -195.38 - 1),
+        new THREE.Vector3(35.9, -3, -195.38 + 1)
+    ],
+    [ // back – ruch w Z
+        new THREE.Vector3(18.58, -3, -219.48),
+        new THREE.Vector3(18.58, -3, -215.48)
+    ],
+    [ // left – ruch w Z
+        new THREE.Vector3(1.2, -3, -193.34 - 1),
+        new THREE.Vector3(1.2, -3, -193.34 + 1)
+    ]
 ];
+
 const potionPositions = [
-    new THREE.Vector3(0, 10, 10),
-    new THREE.Vector3(-8, 10, -40),
-    new THREE.Vector3(12, 10, 30),
+    new THREE.Vector3(0, 4.5, 10),
+    new THREE.Vector3(-8, 4.5, -40),
+    new THREE.Vector3(12, 1, 30),
+    new THREE.Vector3(2.4, -4.5, -169.2),    // lewy przedni róg
+    new THREE.Vector3(35.88, -4.5, -169.3),  // prawy przedni
+    new THREE.Vector3(35.96, -4.5, -217.46), // prawy tylny
+    new THREE.Vector3(1.20, -4.5, -217.48)   // lewy tylny
 ];
 const treasurePositions = [
     new THREE.Vector3(0, 5, -10),
-
+    new THREE.Vector3(19, -4, -193.32),
 ];
 
 
@@ -60,9 +80,9 @@ async function startGame() {
     // Światło, kamera, świat, obiekty
     const light = new Light();
     const camera = new Camera();
-    const world = await World.create('./glb/world.glb', physic);
+    const world = await World.create('./models/world.glb', physic);
     const box = new BoxEntity(new THREE.Vector3(0, 10, 0), physic);
-    const player = await Player.create('./entity/player/tung/skin.fbx', physic);
+    const player = await Player.create(new THREE.Vector3(0, 15, 0), physic, './entity/player/tung/skin.fbx', './entity/player/tung/');
 
     // Tworzenie wrogów
     const enemies = [];
@@ -94,7 +114,6 @@ async function startGame() {
     const potionSpawner = new PotionSpawner(scene, potionPositions, onPotionPickup);
     function onTreasurePickup(treasure) {
         treasureCounter.increment();
-        console.log('Znalazłeś skarb!');
         // Przykład: respawn po 30 sekundach
         setTimeout(() => treasure.respawn(), 30000);
     }
@@ -110,11 +129,12 @@ async function startGame() {
     graphic.onUpdate((dt) => {
         physic.step();
         player.update(dt, enemies);
-        // console.log(player.position);
 
         enemies.forEach(enemy => {
             enemy.update(dt);
-            enemy.updateHealthBar2D(camera);
+            enemy.updateHealthBar2D(camera, player.position);
+            console.log(enemy);
+
         });
         box.update();
         camera.update(player);

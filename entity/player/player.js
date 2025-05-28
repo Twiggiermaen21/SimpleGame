@@ -1,24 +1,13 @@
 import * as THREE from 'three';
 import { Object3D } from 'three';
-import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js';
 import { RigidBodyDesc, ColliderDesc } from '@dimforge/rapier3d-compat';
 import Gamepad from '../../control/gamepad';
 import { FSM } from './FSM';
 import { HealthBar } from './bar.js';
-
-const loaderFBX = new FBXLoader();
-
-class BasicCharacterControllerProxy {
-    constructor(animations, rigidBody) {
-        this._animations = animations;
-        this.rigidBody = rigidBody;
-    }
-
-    get animations() {
-        return this._animations;
-    }
-}
-
+import { loadModel } from '../../tool/modelLoader.js'; // wspólny loader dla FBX/GLB
+import { FBXLoader } from 'three/examples/jsm/loaders/FBXLoader.js'; // poprawny import
+import { BasicCharacterControllerProxy } from './characterProxy.js';
+import { initPhysicsBody } from '../../tool/function.js';
 export default class Player extends Object3D {
     ctrl = new Gamepad();
 
@@ -27,7 +16,7 @@ export default class Player extends Object3D {
         this.physic = physic;
         this.mesh = null;
         this.rigidBody = null;
-        this.healthBar = new HealthBar(); // albo przekazuj elementId jeśli chcesz
+        this.healthBar = new HealthBar();
         this.hp = 100;
         this.isDead = false;
         this._attackHasHit = false;
@@ -38,23 +27,16 @@ export default class Player extends Object3D {
         this._stateMachine = null;
     }
 
-    async loadModel(path) {
-        const fbx = await loaderFBX.loadAsync(path);
-        // fbx.scale.set(0.01, 0.01, 0.01);
-        fbx.scale.set(0.001, 0.001, 0.001);
-        fbx.position.set(0, -0.5, 0);
 
-        fbx.traverse(child => {
-            if (child.isMesh) {
-                child.castShadow = true;
-                child.receiveShadow = true;
-            }
-        });
+    async loadModel(path, animPath) {
+        // 1) Mesh postaci
+        const character = await loadModel(path, 0.001);
+        character.position.set(0, -0.5, 0);
+        this.mesh = character;
+        this.add(character);
 
-        this.mesh = fbx;
-        this.add(fbx);
-        this._mixer = new THREE.AnimationMixer(fbx);
 
+        this._mixer = new THREE.AnimationMixer(character);
         const manager = new THREE.LoadingManager();
         manager.onLoad = () => {
             this._stateMachine = new FSM.CharacterFSM(
@@ -62,12 +44,10 @@ export default class Player extends Object3D {
             );
             this._stateMachine.SetState('idle');
         };
-
         const animLoader = new FBXLoader(manager);
-        // animLoader.setPath('./player/');
-        animLoader.setPath('entity/player/tung/');
+
         const loadAnim = (name, file) => {
-            animLoader.load(file, (anim) => {
+            animLoader.load(animPath + file, (anim) => {
                 const clip = anim.animations[0];
                 this._animations[name] = {
                     clip,
@@ -75,40 +55,28 @@ export default class Player extends Object3D {
                 };
             });
         };
+        ['idle', 'walk', 'run', 'jump', 'dance', 'attack1', 'attack2', 'dead'].forEach(name => {
+            loadAnim(name, `${name}.fbx`);
+        });
 
-        loadAnim('idle', 'idle.fbx');
-        loadAnim('walk', 'walk.fbx');
-        loadAnim('run', 'run.fbx');
-        loadAnim('jump', 'jump.fbx');
-        loadAnim('dance', 'dance.fbx');
-        loadAnim('attack1', 'attack1.fbx');
-        loadAnim('attack2', 'attack2.fbx');
-        loadAnim('dead', 'dead.fbx');
-        this.initPhysics();
+
+
     }
 
-    initPhysics() {
-        const rigidBodyDesc = RigidBodyDesc.dynamic().setTranslation(0, 15, 0);
-        const rigidBody = this.physic.createRigidBody(rigidBodyDesc);
-        const colliderDesc = ColliderDesc.ball(0.5);
-        // colliderDesc.setTranslation(0, -0.5, 0);
-        this.physic.createCollider(colliderDesc, rigidBody);
-        this.rigidBody = rigidBody;
+    _initPhysics(position) {
+
+        this.rigidBody = initPhysicsBody(this.physic, position);
     }
 
     takeDamage(amount) {
-        if (this.isDead) return; // nie dostaje więcej obrażeń po śmierci
+        if (this.isDead) return;
         this.hp = Math.max(0, this.hp - amount);
         this.healthBar.set(this.hp);
         if (this.hp <= 0 && !this.isDead) {
-            if (this._stateMachine) {
-                this._stateMachine.SetState('dead'); // animacja śmierci
-                this.isDead = true;
-            }
+            this._stateMachine?.SetState('dead');
+            this.isDead = true;
             document.getElementById('game-over').style.display = 'block';
-            const restart = () => {
-                window.location.reload();
-            };
+            const restart = () => window.location.reload();
             window.addEventListener('mousedown', restart, { once: true });
             window.addEventListener('keydown', restart, { once: true });
         }
@@ -116,69 +84,58 @@ export default class Player extends Object3D {
 
     update(delta, enemies) {
         if (!this.rigidBody) return;
-
-        // Jeśli martwy - tylko animacja śmierci działa!
+        // Śmierć
         if (this.isDead) {
-            if (this._mixer) this._mixer.update(delta);
-            if (this._stateMachine) this._stateMachine.Update(delta, this.ctrl); // żeby animacja dead się odpaliła
+            this._mixer?.update(delta);
+            this._stateMachine?.Update(delta, this.ctrl);
             return;
         }
-
-        // NORMALNY UPDATE
+        // Pozycja z fizyki
         const pos = this.rigidBody.translation();
         this.position.set(pos.x, pos.y, pos.z);
         this.rotation.y -= this.ctrl.x * 0.03;
-
-        if (this._mixer) this._mixer.update(delta);
-        if (this._stateMachine) this._stateMachine.Update(delta, this.ctrl);
-
-        if (!this.lastHitTime) this.lastHitTime = 0;
+        // Animacje i FSM
+        this._mixer?.update(delta);
+        this._stateMachine?.Update(delta, this.ctrl);
+        // Kolizja z wrogami
         const now = performance.now();
+        this.lastHitTime ??= 0;
         for (let enemy of enemies) {
-            const dist = this.position.distanceTo(enemy.model.position);
-            if (dist < 1.5 && now - this.lastHitTime > 1000) {
+            const d = this.position.distanceTo(enemy.model.position);
+            if (d < 1.5 && now - this.lastHitTime > 1000 && !enemy.isDead) {
                 this.takeDamage(10);
                 this.lastHitTime = now;
             }
         }
-
-        const isAttacking = this._stateMachine && this._stateMachine._currentState &&
-            (this._stateMachine._currentState.Name === 'attack1' || this._stateMachine._currentState.Name === 'attack2');
-
+        // Atak
+        const state = this._stateMachine?._currentState?.Name;
+        const isAttacking = state === 'attack1' || state === 'attack2';
         if (isAttacking && !this._attackHasHit) {
             for (let enemy of enemies) {
-                const dist = this.position.distanceTo(enemy.model.position);
-                if (dist < 1.5 && !enemy.isDead) {
-                    enemy.takeDamage(25); // lub ile chcesz
-                    this._attackHasHit = true; // żeby nie spamować obrażeń co klatkę
+                const d = this.position.distanceTo(enemy.model.position);
+                if (d < 1.5 && !enemy.isDead) {
+                    enemy.takeDamage(125);
+                    this._attackHasHit = true;
                 }
             }
         }
-        // Po zakończeniu ataku (animacji) resetujesz flagę:
-        if (!isAttacking) {
-            this._attackHasHit = false;
-        }
-
-
-
+        if (!isAttacking) this._attackHasHit = false;
+        // Ruch fizyczny
         this.updatePhysic();
     }
 
-
     updatePhysic() {
         const SPEED = this.ctrl.sprint ? 6 : 3;
-        const localMove = new THREE.Vector3(0, 0, -this.ctrl.z);
-        const globalMove = localMove.applyQuaternion(this.quaternion).multiplyScalar(SPEED);
-
-        const velocity = this.rigidBody.linvel();
-        let y = velocity.y;
-
-        this.rigidBody.setLinvel({ x: globalMove.x, y, z: globalMove.z }, true);
+        const local = new THREE.Vector3(0, 0, -this.ctrl.z);
+        const global = local.applyQuaternion(this.quaternion).multiplyScalar(SPEED);
+        const vel = this.rigidBody.linvel();
+        this.rigidBody.setLinvel({ x: global.x, y: vel.y, z: global.z }, true);
     }
 
-    static async create(path, physic) {
+    static async create(position, physic, path, animPath) {
         const player = new Player(physic);
-        await player.loadModel(path);
+        await player.loadModel(path, animPath);
+        player._initPhysics(position);
         return player;
     }
 }

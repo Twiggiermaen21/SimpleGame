@@ -12,7 +12,7 @@ export default class EnemyFSM {
         this.state = newState;
 
         const anim = this.enemy.animations[newState];
-        
+
         if (anim) {
             Object.values(this.enemy.animations).forEach(a => a.action.stop());
             anim.action.reset().play();

@@ -19,6 +19,7 @@ export default class BoxEntity extends Object3D {
             position.y,
             position.z
         );
+        
         const rigidBody = physic.createRigidBody(rigidBodyDesc);
         const colliderDesc = ColliderDesc.cuboid(0.5, 0.5, 0.5); 
         const collider = physic.createCollider(colliderDesc, rigidBody);
