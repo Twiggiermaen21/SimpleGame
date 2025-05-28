@@ -1,0 +1,133 @@
+html,
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    cursor: default;
+
+    height: 100%;
+    width: 100%;
+}
+
+canvas {
+    display: block;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* GAME OVER SCREEN */
+#game-over {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 3rem;
+    font-family: Arial, sans-serif;
+    color: #fff;
+    text-shadow: 2px 2px 8px #000, 0 0 20px #900;
+    z-index: 100;
+    display: none;
+    pointer-events: none;
+    letter-spacing: 0.2em;
+    font-weight: bold;
+}
+
+#reset {
+    font-size: 1.5rem;
+    color: #ccc;
+    text-shadow: 1px 1px 4px #000, 0 0 10px #900;
+}
+
+#start-screen {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    background: linear-gradient(to top, #d2b48c 0%, #1f140a 40%);
+    color: #f4d58d;
+    z-index: 2000;
+    overflow: hidden;
+    font-family: 'Papyrus', 'Cinzel Decorative', serif;
+    text-shadow: 2px 2px 4px #000;
+}
+
+#sand-wave {
+    position: absolute;
+    top: 300px;
+    left: -5;
+    width: 200%;
+    height: 120%;
+    z-index: 2;
+    pointer-events: none;
+}
+
+#bg-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0.3;
+    z-index: -1;
+}
+
+#tung-image {
+    width: 200px;
+    margin-bottom: 1em;
+    z-index: 10;
+}
+
+#start-screen h1 {
+    font-size: 3em;
+    margin: 0;
+    color: #ffdc73;
+    text-shadow: 3px 3px 6px #000;
+    letter-spacing: 2px;
+}
+
+#start-button {
+    font-size: 1.5em;
+    padding: 0.6em 2.5em;
+    margin-top: 2em;
+    background: linear-gradient(to bottom, #d4af37, #a9741a);
+    border: 2px solid #5c3b07;
+    color: #1e1306;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+}
+
+#start-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.7);
+}
+
+
+/* Loading Screen */
+#loading-screen {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 100vw;
+    height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #111;
+    color: #fff;
+    font-size: 2em;
+    z-index: 1000;
+}
+
+
+
+#loading-progress {
+    margin-top: 20px;
+}

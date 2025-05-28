@@ -4,131 +4,29 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Game</title>
-    <link rel="stylesheet" href="ui.css">
-
-    <style>
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-            cursor: default;
-            /* usuwa paski przewijania */
-            height: 100%;
-            width: 100%;
-        }
-
-        canvas {
-            display: block;
-            width: 100vw;
-            height: 100vh;
-        }
-
-
-
-        #game-over {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            font-size: 3rem;
-            font-family: Arial, sans-serif;
-            color: #fff;
-            text-shadow: 2px 2px 8px #000, 0 0 20px #900;
-            z-index: 100;
-            display: none;
-            pointer-events: none;
-            letter-spacing: 0.2em;
-            font-weight: bold;
-        }
-
-        #reset {
-            font-size: 1.5rem;
-            color: #ccc;
-            text-shadow: 1px 1px 4px #000, 0 0 10px #900;
-        }
-
-
-        #crosshair {
-            position: fixed;
-            left: 50%;
-            top: 50%;
-            width: 24px;
-            height: 24px;
-            pointer-events: none;
-            z-index: 9999;
-            transform: translate(-50%, -50%);
-            display: none;
-        }
-
-        #crosshair:after,
-        #crosshair:before {
-            content: '';
-            position: absolute;
-            background: white;
-            border-radius: 2px;
-        }
-
-        #crosshair:after {
-            left: 50%;
-            top: 0;
-            width: 2px;
-            height: 100%;
-            transform: translateX(-50%);
-        }
-
-        #crosshair:before {
-            top: 50%;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            transform: translateY(-50%);
-        }
-
-
-
-        .enemy-healthbar {
-            position: absolute;
-            width: 60px;
-            height: 8px;
-            background: #400;
-            border: 1px solid #222;
-            border-radius: 5px;
-            overflow: hidden;
-            pointer-events: none;
-            z-index: 10000;
-            transform: translate(-50%, -50%);
-        }
-
-        .enemy-healthbar-inner {
-            height: 100%;
-            background: linear-gradient(to right, #0f0, #ff0, #f00);
-            transition: width 0.1s;
-        }
-    </style>
+    <title>Lost Relic</title>
+    <link rel="icon" href="/assets/icon/favicon.ico" type="image/x-icon">
+    <link rel="stylesheet" href="/assets/css/ui.css">
+    <link rel="stylesheet" href="/assets/css/crosshair.css">
+    <link rel="stylesheet" href="/assets/css/game.css">
+    <link rel="stylesheet" href="/assets/css/enemy.css">
     <script src="./app.js" type="module"></script>
 </head>
 
 <body>
 
-    <div id="start-screen" style="
-    position:fixed; left:0; top:0; width:100vw; height:100vh;
-    display:flex; align-items:center; justify-content:center;
-    background:#222; color:#fff; z-index:2000; flex-direction:column;">
-
-
-        <h1 style="font-size:3em;">My Epic Game</h1>
-        <button id="start-button" style="font-size:1.5em; padding:0.5em 2em; margin-top:2em;">START</button>
+    <div id="start-screen">
+        <img src="/assets/images/piramide.png" id="bg-image" alt="Pyramid background">
+        <img src="/assets/images/tung-indiana.png" id="tung-image" alt="Tung Tung explorer">
+        <img  src="assets/images/sand-wave.png" id="sand-wave" alt="Sand Wave Decoration" />
+        <h1>Lost Relic</h1>
+        <button id="start-button">Start Game</button>
     </div>
-    <div id="loading-screen" style="
-    position:fixed; left:0; top:0; width:100vw; height:100vh; 
-    display:flex; align-items:center; justify-content:center;
-    background:#111; color:#fff; font-size:2em; z-index:1000;
-">
+
+    <div id="loading-screen">
         <div>
             <div id="loading-text">Loading...</div>
-            <div id="loading-progress" style="margin-top:20px;"></div>
+            <div id="loading-progress"></div>
         </div>
     </div>
 
@@ -148,7 +46,7 @@
             </span>
         </div>
     </div>
-                                                                                                         
+
 
     <div id="crosshair"></div>
 

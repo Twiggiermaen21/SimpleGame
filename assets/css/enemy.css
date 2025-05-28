@@ -1,0 +1,20 @@
+
+/* ENEMY HEALTH BAR */
+.enemy-healthbar {
+    position: absolute;
+    width: 60px;
+    height: 8px;
+    background: #400;
+    border: 1px solid #222;
+    border-radius: 5px;
+    overflow: hidden;
+    pointer-events: none;
+    z-index: 10000;
+    transform: translate(-50%, -50%);
+}
+
+.enemy-healthbar-inner {
+    height: 100%;
+    background: linear-gradient(to right, #0f0, #ff0, #f00);
+    transition: width 0.1s;
+}
