@@ -30,13 +30,13 @@ Projekt gry 3D zrealizowany w JavaScript z użyciem **Three.js** do grafiki i **
 
 3. **Uruchom projekt:**
     ```bash
-    npm run dev
+    npx vite        
     ```
     *(lub inny odpowiedni skrypt, zależnie od użytego bundlera)*
 
 4. **Wejdź na:**
     ```
-    http://localhost:3000
+    http://localhost:5173
     ```
 
 
