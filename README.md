@@ -13,7 +13,7 @@ Projekt gry 3D zrealizowany w JavaScript z użyciem **Three.js** do grafiki i **
 ## Demo
 
 Wstaw tutaj gif lub screena z gry!  
-*(np. ![screenshot](./docs/screenshot.png) )*
+*(np. ![screenshot](./puiblic/image.png) )*
 
 ## Instalacja
 
