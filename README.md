@@ -13,7 +13,7 @@ Projekt gry 3D zrealizowany w JavaScript z użyciem **Three.js** do grafiki i **
 ## Demo
 
 
-*(np. ![screenshot](./public/image.png) )*
+ ![screenshot](./public/image.png) 
 
 ## Instalacja
 
